@@ -24,6 +24,39 @@ PROTO="MCP-Protocol-Version: 2025-06-18"
 
 ```
 
+## Reusable developer workflow commands
+
+These commands provide a quick smoke-test workflow for developers who want to verify the server, MCP endpoint, and direct HTTP routes from the terminal.
+
+```bash
+# Base URLs
+BASE=${BASE:-http://localhost:8003}
+MCP=${MCP:-$BASE/mcp/}
+
+# Shared MCP headers
+ACCEPT="Accept: application/json, text/event-stream"
+PROTO="MCP-Protocol-Version: 2025-06-18"
+
+# 1. Check server health
+curl -s "$BASE/health"
+
+# 2. Start an MCP session and capture the session id
+SESSION=$(curl -sD - -o /dev/null "$MCP" \
+  -H "Content-Type: application/json" \
+  -H "$ACCEPT" \
+  -H "$PROTO" \
+  -d '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl","version":"1.0"}}}' \
+  | awk 'BEGIN{IGNORECASE=1} /^mcp-session-id:/ {sub(/\r$/,""); print $2}')
+
+# 3. List available MCP tools
+curl -s "$MCP" \
+  -H "Content-Type: application/json" \
+  -H "$ACCEPT" \
+  -H "$PROTO" \
+  -H "Mcp-Session-Id: $SESSION" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+```
+
 ## Quick connectivity + session capture (run this first)
 
 ```bash
