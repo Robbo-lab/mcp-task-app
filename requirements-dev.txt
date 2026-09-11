@@ -71,11 +71,15 @@ h11==0.16.0
     #   uvicorn
 httpcore==1.0.9
     # via httpx
+httpcore2==2.4.0
+    # via httpx2
 httpx==0.28.1
     # via
     #   ipos-open-source-2026s1 (pyproject.toml)
     #   fastmcp-slim
     #   mcp
+httpx2==2.4.0
+    # via ipos-open-source-2026s1 (pyproject.toml:dev)
 httpx-sse==0.4.3
     # via mcp
 hypothesis==6.152.7
@@ -213,6 +217,8 @@ starlette==1.0.0
     #   fastapi
     #   mcp
     #   sse-starlette
+truststore==0.10.4
+    # via httpx2
 ty==0.0.37
     # via ipos-open-source-2026s1 (pyproject.toml:dev)
 typing-extensions==4.15.0
