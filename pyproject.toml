@@ -17,6 +17,7 @@ dependencies = [
   "fastapi>=0.136.1",
   "fastmcp>=3.3.0",
   "httpx>=0.28.1",
+  "httpx2>=0.1.1",
   "anyio>=4.13.0",
   # Utility lib's
   "click>=8.0",

@@ -10,6 +10,7 @@ anyio==4.13.0
     # via
     #   ipos-open-source-2026s1 (pyproject.toml)
     #   httpx
+    #   httpx2
     #   mcp
     #   py-key-value-aio
     #   sse-starlette
@@ -65,9 +66,12 @@ griffelib==2.0.2
 h11==0.16.0
     # via
     #   httpcore
+    #   httpcore2
     #   uvicorn
 httpcore==1.0.9
     # via httpx
+httpcore2==2.5.0
+    # via httpx2
 httpx==0.28.1
     # via
     #   ipos-open-source-2026s1 (pyproject.toml)
@@ -75,11 +79,14 @@ httpx==0.28.1
     #   mcp
 httpx-sse==0.4.3
     # via mcp
-idna==3.16
+httpx2==2.5.0
+    # via ipos-open-source-2026s1 (pyproject.toml)
+idna==3.18
     # via
     #   anyio
     #   email-validator
     #   httpx
+    #   httpx2
 jaraco-classes==3.4.0
     # via keyring
 jaraco-context==6.1.2
@@ -185,6 +192,10 @@ starlette==1.1.0
     #   fastapi
     #   mcp
     #   sse-starlette
+truststore==0.10.4
+    # via
+    #   httpcore2
+    #   httpx2
 typing-extensions==4.15.0
     # via
     #   fastapi
