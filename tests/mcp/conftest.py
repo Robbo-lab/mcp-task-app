@@ -34,7 +34,7 @@ def mcp_headers(protocol_version: str) -> dict[str, str]:
 
 
 @pytest.fixture(scope="session")
-def http_client() -> Generator[httpx.Client]:
+def http_client() -> Generator[httpx.Client, None, None]:
     with httpx.Client(timeout=10.0) as client:
         yield client
 
@@ -56,7 +56,7 @@ class MCPTestClient:
         if "id" in kwargs:
             rpc_id = kwargs.pop("id")
         if kwargs:
-            raise TypeError(f"Unexpected keyword arguments: {', '.join(kwargs)}")
+            raise TypeError(f"Unexpected keyword arguments: {", ".join(kwargs)}")
 
         payload: dict[str, Any] = {"jsonrpc": "2.0", "id": rpc_id, "method": method}
         if params is not None:
