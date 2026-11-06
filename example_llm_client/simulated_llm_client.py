@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import os
 from typing import Any
 
@@ -63,7 +64,8 @@ def handle_manual_tool_call(call: Any) -> dict[str, Any]:
     print(f"\n[Tool Requested: {call.name}]")
     print("\n--- ACTION REQUIRED ---")
     print(
-        f"Run: curl -X POST http://localhost:8003/miles-to-kilometers -d '{call.args}'"
+        "Run: curl -s -X POST http://localhost:8003/convert-miles-to-kilometers "
+        f"-H 'Content-Type: application/json' -d '{json.dumps(call.args)}'"
     )
 
     mcp_result = input("Enter the 'result' from the tool: ")
