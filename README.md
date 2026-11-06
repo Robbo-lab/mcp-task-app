@@ -39,21 +39,31 @@ example_llm_client/       # Example Gemini / LLM client
 
 - Python 3.13
 - Virtual environment.
-- npm inspector below.
+- Optional, for the MCP Inspector: Node.js 22.23.4+, 24.22.1+ or 26.12.1+ (see [Inspect with the MCP Inspector](#inspect-with-the-mcp-inspector)).
 
 ## Setup from this folder
+
+You can use either plain Python (venv + pip) or [uv](https://docs.astral.sh/uv/).
+
+**Option A: Python venv + pip**
 
 ```bash
 python -m venv .venv
 
-# Mac or Gitbash
+# activate it: macOS / Linux / Git Bash
 source .venv/bin/activate
 
-# Windows powershell:
-.venv\Scripts\activate
-python -m pip install -r requirements.txt
+# activate it: Windows PowerShell
+.venv\Scripts\Activate.ps1
 
-# or use UV:
+# then, on every OS
+python -m pip install -r requirements.txt       # run the app
+python -m pip install -r requirements-dev.txt   # also run the tests and linters
+```
+
+**Option B: uv**
+
+```bash
 uv sync
 ```
 
@@ -75,20 +85,38 @@ The `.env` file is ignored by git, so your API key should stay local and should 
 
 ## Run the HTTP + MCP server
 
+The server reads `GEMINI_API_KEY` from the environment at startup; it does not load `.env` by itself. Load `.env` into the environment when you start it:
+
+**With Python (venv activated)**
+
 ```bash
-# start the server
-
-# with Python 
-python -m main
-
-# with UV (recommended)
-uv run main.py
-
-# with just
-just run
+# macOS / Linux / Git Bash (bash or zsh)
+set -a; source .env; set +a
+python main.py
 ```
 
+```powershell
+# Windows PowerShell
+Get-Content .env | Where-Object { $_ -match '^\s*[^#].*=' } | ForEach-Object {
+  $name, $value = $_ -split '=', 2
+  Set-Item -Path "env:$($name.Trim())" -Value $value.Trim()
+}
+python main.py
+```
+
+**With uv**
+
+```bash
+uv run --env-file .env python main.py
+```
+
+**Without a Gemini key** (conversion and task tools only), any of these work: `python main.py`, `python -m main`, `uv run main.py`, or `just run` (uses uv if it's installed, otherwise the activated venv's `python`).
+
+If Gemini calls fail with `No client registered for provider: gemini`, the server was started without the key. See [`USAGE.md`](USAGE.md) for the full walkthrough.
+
 **To run test curl commands see `app/docs/curl_testing/mcp_curl_test_examples.md`.**
+
+**To run the server with your Gemini key and test it end to end, see [`USAGE.md`](USAGE.md).**
 
 You'll see:
 
@@ -147,15 +175,26 @@ Example VS Code .vscode/mcp.json entry:
    - Resources: resource://unit_reference, resource://troubleshooting_guide
    - Prompts: explain_conversion, api_usage
 
-## Inspect with the npm MCP Inspector
+## Inspect with the MCP Inspector
 
-- explore everything (tools, resources, prompts) in a browser.
-- with the server already running on http://localhost:8003
+The [MCP Inspector](https://github.com/modelcontextprotocol/inspector) lets you explore the server's tools, resources and prompts in a browser. Start the server first (see above), then:
 
 ```bash
-# If env error appears
-npx @modelcontextprotocol/inspector@latest -e DUMMY=1 --url http://localhost:8003/mcp --transport streamable-http
+npx @modelcontextprotocol/inspector@latest --web \
+  --server-url http://localhost:8003/mcp/ --transport http --protocol-era modern
 ```
+
+`--protocol-era modern` is required. The Inspector defaults to the older handshake protocol, which this server refuses with `Only MCP protocol 2026-07-28 is supported`.
+
+To call the server from the terminal instead of the browser, use `--cli` with a `--method`:
+
+```bash
+npx @modelcontextprotocol/inspector@latest --cli \
+  --server-url http://localhost:8003/mcp/ --transport http --protocol-era modern \
+  --method tools/list
+```
+
+See [`USAGE.md`](USAGE.md#6-explore-with-the-mcp-inspector) for more Inspector commands.
 
 ## Run Tests
 
