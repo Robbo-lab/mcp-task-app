@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # PLTask stands for Pydantic Task
@@ -12,5 +12,5 @@ class PLTask(BaseModel):
     type: str | None = None
     description: str | None = None
     completed: bool | None = False
-    task_started: datetime | None = datetime.now()
+    task_started: datetime | None = Field(default_factory=datetime.now)
     task_ended: datetime | None = None
