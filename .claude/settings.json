@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"/private/tmp/claude-501/-Users-robbozinoz-Documents-NM-Tafe-IPOS-mcp-task-app/498f2374-9e60-4076-9bdd-0311b3917d81/scratchpad/issue-comments\")"
+    ]
+  }
+}

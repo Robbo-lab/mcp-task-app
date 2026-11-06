@@ -15,8 +15,9 @@ requires-python = ">=3.13"
 dependencies = [
   # Server dependencies
   "fastapi>=0.136.1",
-  "fastmcp>=3.3.0",
+  "fastmcp>=4.1",
   "httpx>=0.28.1",
+  "httpx-sse>=0.4.3", # used directly by the LLM provider clients; no longer pulled in by mcp 2.x
   "anyio>=4.13.0",
   # Utility lib's
   "click>=8.0",

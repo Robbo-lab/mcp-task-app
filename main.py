@@ -11,6 +11,7 @@ from app.llm.state import queue
 from app.mcp.mcp_prompts.converter_prompts import explain_conversion_prompt
 from app.mcp.mcp_resources.converter_resources import RESOURCE_DEFINITIONS
 from app.mcp.mcp_tools.miles_to_km import router as mile_to_km
+from app.mcp.protocol import ModernProtocolOnly
 from app.routes.router_handler import Router
 from app.security.rate_limit import RateLimitMiddleware
 from app.utils.resource_utils import register_resources
@@ -41,7 +42,13 @@ mcp = FastMCP.from_fastapi(
     app,
     name="Unit Converter MCP Server",
     instructions="Unit conversion tools with supporting resources and prompts.",
+    version=app.version,
+    cache_ttl=300,
+    cache_scope="public",
 )
+
+# --- Protocol --- serve MCP 2026-07-28 only (#126)
+mcp.add_middleware(ModernProtocolOnly())
 
 # --- Register Resources --- dynamically via URI template
 register_resources(mcp, RESOURCE_DEFINITIONS)
