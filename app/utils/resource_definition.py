@@ -14,6 +14,7 @@ class ResourceDefinition:
         mime_type: The format type like application/json.
         func: The function to get the data.
     """
+
     name: str
     display_name: str
     description: str
