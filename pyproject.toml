@@ -1,1 +1,119 @@
-test
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ipos-open-source-2026S1"
+version = "0.0.2"
+description = "a fastapi application to handle ai agent and mcp interactions workflow's in a reusable and scalable manner"
+authors = [{ name = "John Robertson", email = "john@myjamjar.com.au" }]
+license = { text = "MIT" }
+keywords = ["task", "management", "cli", "reusable", "components"]
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+  # Server dependencies
+  "fastapi>=0.136.1",
+  "fastmcp>=4.1",
+  "httpx>=0.28.1",
+  "httpx-sse>=0.4.3", # used directly by the LLM provider clients; no longer pulled in by mcp 2.x
+  "anyio>=4.13.0",
+  # Utility lib's
+  "pydantic>=2.13.4",
+  "sqlalchemy>=2.0.50",
+]
+
+[dependency-groups]
+dev = [
+  "hypothesis>=6.152.7",
+  "pytest>=9.0.3",
+  "pytest-asyncio>=1.3.0",
+  "pytest-cov>=7.1.0",
+  "ruff>=0.15.13",
+  "ty>=0.0.37",
+]
+
+[project.urls]
+Homepage = "https://github.com/Robbo-lab/ipos-open-source-2026S1.git"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+namespaces = false
+
+[tool.ruff]
+line-length = 88
+fix = true
+unsafe-fixes = true
+preview = true
+extend-exclude = ["app/docs/sphinx-docs/source/conf.py"]
+
+[tool.ruff.lint]
+select = [
+  "RUF", # Ruff-specific rules
+  "C90", # mccabe
+  "E", # pylint-errors
+  "A", # flake8-builtins
+  "F", # Pyflakes
+  "W", # pylint-warnings
+  "B", # flake8-bugbear
+  "D", # pydocstyle
+  "I", # isort
+  "N", # pep8-naming
+  "Q", # flake8-quotes
+  "TID", # flake8-tidy-imports
+  "PLR", # Refactor
+  "FURB", # refurb
+  "FAST", # FastAPI
+  "COM", # flake8-commas
+  "C4", # flake8-comprehensions
+  "ICN", # flake8-import-conventions
+  "LOG", # flake8-logging-format
+  "UP", # flake8-upgrade
+  "RET", # flake8-return
+]
+preview = true
+ignore = [
+  "D100", # Missing docstring in public module
+  "D101", # Missing docstring in public class
+  "D102", # Missing docstring in public method
+  "D103", # Missing docstring in public function
+  "D104", # Missing docstring in public package
+  "D105", # Missing docstring in magic method
+  "D106", # Missing docstring in public nested class
+  "D107", # Missing docstring in __init__
+  "D205", # 1 blank line required between summary line and description
+  "D212", # Multi-line docstring summary should start at the first line
+  "T20", # ignore: flake8-print (keep prints for now)
+  "PT", # ignore: flake8-pytest-style (keep unittest-style asserts if needed)
+  "COM812", # ignore: trailing comma conflict with formatter
+  "E501", # ignore: line too long (auto-formatter may break this)
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 7
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-branches = 8
+max-statements = 30
+
+[tool.ruff.format]
+quote-style = "double"
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+indent-style = "space"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests/mcp", "tests/llm"]
