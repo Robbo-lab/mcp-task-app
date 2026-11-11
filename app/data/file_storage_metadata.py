@@ -1,16 +1,20 @@
 import datetime
 from dateutil import parser
 
-class FileStorageMetadata:
+class File_storage_metadata:
     def __init__(self, file_id: str, original_filename: str, file_extension: str, file_size: int,
                  created_time_stamp: datetime.datetime, content_type: str = ""):
         self.file_id = file_id
-        self.original_filename = original_filename
-        self.content_type = content_type
+        self.original_filename = original_filename.strip()
+        self.content_type = content_type.strip()
         self.file_size = file_size
         self.created_time_stamp = created_time_stamp
-        self.file_extension = file_extension
-        self.saved_filename = f"{file_id}.{self.file_extension}"
+        self.file_extension = file_extension.strip()
+        self.saved_filename = f"{file_id}.{self.file_extension.strip()}"
+        self.file_path = f"app/data/files/{self.saved_filename}"
+
+    def __eq__(self, other):
+        return str(self) == str(other)
 
     def __repr__(self):
         """
@@ -19,7 +23,7 @@ class FileStorageMetadata:
         file_id, original_filename, file_extension, file_size, created_time_stamp, content_type
 
         """
-        return f"{self.file_id}, {self.saved_filename}, {self.original_filename}, {self.content_type}, {self.file_size}, {self.created_time_stamp}"
+        return f"{self.file_id}, {self.original_filename}, {self.file_extension}, {self.file_size}, {self.created_time_stamp}, {self.content_type}"
 
     @classmethod
     def from_string(cls, string: str):
