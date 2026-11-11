@@ -20,9 +20,7 @@ dependencies = [
   "httpx-sse>=0.4.3", # used directly by the LLM provider clients; no longer pulled in by mcp 2.x
   "anyio>=4.13.0",
   # Utility lib's
-  "click>=8.0",
   "pydantic>=2.13.4",
-  "python-dateutil>=2.8",
   "sqlalchemy>=2.0.50",
 ]
 
