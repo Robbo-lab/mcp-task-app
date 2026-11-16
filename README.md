@@ -88,7 +88,7 @@ uv run main.py
 just run
 ```
 
-**To run test curl commands see `app/docs/curl_testing/mcp_curl_test_examples.md`.**
+**To run test curl commands see** [mcp_curl_test_examples.md](app/docs/curl_testing/mcp_curl_test_examples.md).
 
 You'll see:
 
@@ -229,7 +229,7 @@ For detailed contribution guidelines, see [CONTRIBUTION.md](CONTRIBUTION.md).
 
 ## Notes
 
-**To run test curl commands see `app/docs/curl_testing/mcp_curl_test_examples.md`.**
+**To run test curl commands see** [mcp_curl_test_examples.md](app/docs/curl_testing/mcp_curl_test_examples.md).
 
 macOS/Linux (bash/zsh)
 - The examples above will work as-is.
