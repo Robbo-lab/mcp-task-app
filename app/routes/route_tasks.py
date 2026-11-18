@@ -33,44 +33,34 @@ def get_task_by_id(
         raise HTTPException(
             status_code=404, detail=f"Task with id '{task_id}' could not be found."
         )
-
     return task
 
 
-@task_router.post("/delete")
+@task_router.delete("/tasks/by-name/{name}")
 def delete_task_by_name(
-    session: Annotated[Session, Depends(get_session_api)], name: str | None = None
+    session: Annotated[Session, Depends(get_session_api)], name: str
 ):
-    if name is None:
-        raise HTTPException(status_code=400, detail="name is required")
     TaskHandler.delete_task(session, name)
 
 
-@task_router.post("/add")
+@task_router.post("/tasks")
 def create_task(
-    session: Annotated[Session, Depends(get_session_api)], task: PLTask | None = None
+    session: Annotated[Session, Depends(get_session_api)], task: PLTask
 ) -> PLTask:
-    try:
-        if task is None:
-            raise HTTPException(status_code=400, detail="task is required")
-        task = TaskHandler.add_task_to_db(session, task)
-    except Exception as e:
-        raise e
+    task = TaskHandler.add_task_to_db(session, task)
     return task
 
 
-@task_router.get("/task-list")
+@task_router.get("/tasks")
 def filter_task_by_type(
     session: Annotated[Session, Depends(get_session_api)], task_type: str | None = None
 ) -> list[PLTask]:
     return TaskHandler.list_tasks(session, task_type)
 
 
-@task_router.post("/complete")
+@task_router.patch("/tasks/by-name/{name}/complete")
 def complete_task(
-    session: Annotated[Session, Depends(get_session_api)], name: str | None = None
+    session: Annotated[Session, Depends(get_session_api)], name: str
 ) -> PLTask:
-    if name is None:
-        raise HTTPException(status_code=400, detail="name is required")
     task = TaskHandler.get_task(session, name)
     return TaskHandler.complete_task(session, task)
