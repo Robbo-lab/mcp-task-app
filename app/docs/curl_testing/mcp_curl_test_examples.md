@@ -120,6 +120,32 @@ curl -s -X POST "$BASE/convert-miles-to-kilometers" \
   -H "Content-Type: application/json" \
   -H "$AUTH" \
   -d '{"miles": 3.1}'
+  
+# Task endpoints
+
+# Get task by name
+curl "$BASE/tasks/by-name/Example"
+
+# Get task by ID
+curl "$BASE/tasks/1"
+
+# List tasks
+curl "$BASE/tasks"
+
+# Filter tasks
+curl "$BASE/tasks?task_type=example"
+
+# Create a task
+curl -X POST "$BASE/tasks" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Study Python","type":"study","description":"Complete assignment"}'
+
+# Delete task
+curl -X DELETE "$BASE/tasks/by-name/Example"
+
+# Complete task
+curl -X PATCH "$BASE/tasks/by-name/Example/complete"
+
 ```
 
 Each command returns JSON (tools/resources/prompts over MCP) or plain text/JSON (HTTP endpoints). Adjust `BASE`, `MCP`, or bearer token if you run the server on a different host/port.
