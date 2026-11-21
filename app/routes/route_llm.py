@@ -43,7 +43,7 @@ async def generate_async(request: LLMRouteRequest):
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-@router.get("/v1/llm/jobs/{job_id}", response_model=Job)
+@router.get("/v1/llm/jobs/{job_id}", response_model=Job, operation_id="get_job_status")
 async def get_job_status(job_id: str):
     """Check the status and result of a background job."""
     if not client.queue:
