@@ -62,13 +62,13 @@ def test_tool_names(mcp_client):
         "complete_task",
         "generate_content",
         "convert_miles_to_kilometers",
-        "get_job_status_v1_llm_jobs",
+        "get_job_status",
         "root",
         "health_health_get",
         "generate_async_v1_llm_enqueue_post",
     }
 
-    #  get_job_status_v1_llm_jobs, root, health_health_get,
+    #  get_job_status, root, health_health_get,
     #  generate_async_v1_llm_enqueue_post
     #  These four additional tools are currently exposed.
     # Remove them from this set once their exposure is resolved under #130.
