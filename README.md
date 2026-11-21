@@ -85,24 +85,24 @@ The `.env` file is ignored by git, so your API key should stay local and should 
 
 ## Common LLM Provider Documentation
 
-| Provider | Official documentation |
-| -------- | ---------------------- |
-| OpenAI | [OpenAi Documentation](https://developers.openai.com/api/docs/quickstart) |
-| Azure OpenAI | [Azure OpenAi Documentation](https://learn.microsoft.com/en-us/azure/foundry/openai/api-version-lifecycle?tabs=python) |
-| Google Gemini | [Google Gemini Documentation](https://aistudio.google.com/docs/get-started) |
-| Anthropic | [Claude Documentation](https://platform.claude.com/docs/en/get-started) |
-| Mistral | [Mistral Documentation](https://docs.mistral.ai/) |
-| Cohere | [Cohere Documentation](https://docs.cohere.com/docs/get-started-installation) |
-| AWS Bedrock | [AWS Bedrock Documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html) |
-| Groq | [Grog Documentation](https://console.groq.com/docs/quickstart) |
-| Together AI | [Together AI Documentation](https://docs.together.ai/docs/quickstart) |
-| Hugging Face | [Hugging Face Interface Providers Documentation](https://huggingface.co/docs/inference-providers/en/index) |
-| Fireworks AI | [Fireworks AI Documentation](https://docs.fireworks.ai/api-reference/introduction) |
-| Vertex AI*| [Gemini Enterprise Agent Platform](https://docs.cloud.google.com/gemini-enterprise-agent-platform/overview) |
-| Replicate |[Replicate Documentation](https://replicate.com/docs/get-started/python) |
-| Eden AI | [Eden AI Documentation](https://www.edenai.co/docs/v3/quickstart/first-llm-call) |
-| Portkey | [Portkey Documentation](https://portkey.ai/docs/api-reference/sdk/python) |
-| DeepInfra | [DeepInfra Documentation](https://docs.deepinfra.com/api-reference/introduction) |
+| Provider | Official documentation | Pricing |
+| -------- | ---------------------- | ------- |
+| OpenAI | [OpenAi Documentation](https://developers.openai.com/api/docs/quickstart) | [Pricing](https://developers.openai.com/api/docs/pricing) |
+| Azure OpenAI | [Azure OpenAi Documentation](https://learn.microsoft.com/en-us/azure/foundry/openai/api-version-lifecycle?tabs=python) | [Pricing](https://azure.microsoft.com/en-us/pricing/details/azure-openai/) |
+| Google Gemini | [Google Gemini Documentation](https://aistudio.google.com/docs/get-started) | [Pricing](https://aistudio.google.com/docs/pricing |)
+| Anthropic | [Claude Documentation](https://platform.claude.com/docs/en/get-started) | [Pricing](https://platform.claude.com/docs/en/about-claude/pricing) |
+| Mistral | [Mistral Documentation](https://docs.mistral.ai/) | [Pricing](https://docs.mistral.ai/inference/pricing) |
+| Cohere | [Cohere Documentation](https://docs.cohere.com/docs/get-started-installation) | [Pricing](https://cohere.com/pricing) | 
+| AWS Bedrock | [AWS Bedrock Documentation](https://docs.aws.amazon.com/bedrock/latest/userguide/getting-started.html) | [Pricing](https://aws.amazon.com/bedrock/pricing/) |
+| Groq | [Grog Documentation](https://console.groq.com/docs/quickstart) | [Pricing](https://console.groq.com/docs/models) |
+| Together AI | [Together AI Documentation](https://docs.together.ai/docs/quickstart) | [Pricing](https://www.together.ai/pricing) |
+| Hugging Face | [Hugging Face Interface Providers Documentation](https://huggingface.co/docs/inference-providers/en/index) | |
+| Fireworks AI | [Fireworks AI Documentation](https://docs.fireworks.ai/api-reference/introduction) | [Pricing](https://fireworks.ai/pricing) |
+| Vertex AI*| [Gemini Enterprise Agent Platform](https://docs.cloud.google.com/gemini-enterprise-agent-platform/overview) | |
+| Replicate |[Replicate Documentation](https://replicate.com/docs/get-started/python) | [Pricing](https://replicate.com/pricing) |
+| Eden AI | [Eden AI Documentation](https://www.edenai.co/docs/v3/quickstart/first-llm-call) | |
+| Portkey | [Portkey Documentation](https://portkey.ai/docs/api-reference/sdk/python) | [Pricing](https://portkey.ai/models) |
+| DeepInfra | [DeepInfra Documentation](https://docs.deepinfra.com/api-reference/introduction) | [Pricing](https://deepinfra.com/pricing) |
 
 __*Vertex AI__ was rebranded to Gemini Enterprise Agent Platform in April 2026 [See link](https://docs.cloud.google.com/gemini-enterprise-agent-platform/vertex-ai-name-changes) for information. 
 
