@@ -8,7 +8,7 @@ from app.routes.router_handler import Router
 router = Router.get_router("system")
 
 
-@router.post("/v1/llm/generate")
+@router.post("/v1/llm/generate", operation_id="generate_content")
 async def generate_sync(request: LLMRouteRequest):
     """
     Generate content synchronously.

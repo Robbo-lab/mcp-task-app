@@ -11,7 +11,7 @@ from app.services.database import get_session_api
 task_router = Router.task_router
 
 
-@task_router.get("/get-name", response_model=PLTask)
+@task_router.get("/get-name", response_model=PLTask, operation_id="get_task_by_name")
 def get_task_by_name(
     session: Annotated[Session, Depends(get_session_api)], name: str | None = None
 ) -> PLTask:
@@ -30,7 +30,7 @@ def get_task_by_name(
     return task
 
 
-@task_router.get("/get-id", response_model=PLTask)
+@task_router.get("/get-id", response_model=PLTask, operation_id="get_task_by_id")
 def get_task_by_id(
     session: Annotated[Session, Depends(get_session_api)], task_id: int | None = None
 ) -> PLTask:
@@ -49,7 +49,7 @@ def get_task_by_id(
     return task
 
 
-@task_router.post("/delete")
+@task_router.post("/delete", operation_id="delete_task_by_name")
 def delete_task_by_name(
     session: Annotated[Session, Depends(get_session_api)], name: str | None = None
 ):
@@ -58,7 +58,7 @@ def delete_task_by_name(
     TaskHandler.delete_task(session, name)
 
 
-@task_router.post("/add")
+@task_router.post("/add", operation_id="create_task")
 def create_task(
     session: Annotated[Session, Depends(get_session_api)], task: PLTask | None = None
 ) -> PLTask:
@@ -71,14 +71,14 @@ def create_task(
     return task
 
 
-@task_router.get("/task-list")
+@task_router.get("/task-list", operation_id="filter_task_by_type")
 def filter_task_by_type(
     session: Annotated[Session, Depends(get_session_api)], task_type: str | None = None
 ) -> list[PLTask]:
     return TaskHandler.list_tasks(session, task_type)
 
 
-@task_router.post("/complete")
+@task_router.post("/complete", operation_id="complete_task")
 def complete_task(
     session: Annotated[Session, Depends(get_session_api)], name: str | None = None
 ) -> PLTask:
