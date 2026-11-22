@@ -3,8 +3,17 @@ from pydantic import ValidationError
 
 from app.core.settings import Settings, settings
 
+# ruff: noqa: PLR6301
+SERVER_PORT = 8003
+
 
 class TestSettings:
+    """
+    Collect all test methods for settings.py.
+
+    Type checks, default values, and then validation.
+    """
+
     # Type checks
     def test_server_host_is_type_str(self):
         assert isinstance(settings.server_host, str)
@@ -26,7 +35,7 @@ class TestSettings:
         assert settings.server_host == "localhost"
 
     def test_settings_default_server_port(self):
-        assert settings.server_port == 8003
+        assert settings.server_port == SERVER_PORT
 
     def test_settings_default_mcp_base_url(self):
         assert settings.mcp_base_url == "http://localhost:8003"
