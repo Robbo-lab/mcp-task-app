@@ -1,6 +1,6 @@
 import sys
-from typing import Any
-import pytest
+from types import ModuleType
+from typing import Any, cast
 
 
 # Fake the fastmcp module so resource_utils doesn't crash on import
@@ -12,8 +12,9 @@ class MockFastMCPModule:
         TextResource = None
 
 
-sys.modules["fastmcp"] = MockFastMCPModule
-sys.modules["fastmcp.resources"] = MockFastMCPModule.resources
+# The stand-ins are classes, not modules; the runtime only needs attributes.
+sys.modules["fastmcp"] = cast(ModuleType, MockFastMCPModule)
+sys.modules["fastmcp.resources"] = cast(ModuleType, MockFastMCPModule.resources)
 
 
 class MockFastMCP:
@@ -28,6 +29,7 @@ class MockFastMCP:
         def decorator(handler_func):
             self.registered_routes[uri_template] = handler_func
             return handler_func
+
         return decorator
 
     def add_resource(self, resource):
@@ -86,7 +88,7 @@ def test_register_resources_dry_run():
         )
     ]
 
-    register_resources(mock_mcp, definitions, include_static=False)
+    register_resources(cast(Any, mock_mcp), definitions, include_static=False)
     assert "resource://converter/{name}" in mock_mcp.registered_routes
 
 
@@ -99,7 +101,7 @@ def test_resource_definition_execution():
         display_name="Exec Test",
         description="Testing functional callbacks.",
         mime_type="text/plain",
-        func=lambda: "raw text content"
+        func=lambda: "raw text content",
     )
     assert resource.func() == "raw text content"
     assert resource.display_name == "Exec Test"
