@@ -5,7 +5,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 from app.core.exceptions import ValidationError
-from app.mcp.mcp_tools.conversion import miles_to_kilometers_converter
+from app.mcp.mcp_tools.conversion import MilesToKilometersConverter
+from app.mcp.mcp_tools.converter_interface import Converter
 
 router = APIRouter(prefix="", tags=["unit-conversion"])
 
@@ -59,7 +60,8 @@ def miles_to_kilometers_value(miles: float | None) -> float:
             "Distance is unrealistically large for this tutorial example."
         )
 
-    return miles_to_kilometers_converter(miles)
+    converter: Converter = MilesToKilometersConverter()
+    return converter.convert(miles)
 
 
 @router.post("/convert-miles-to-kilometers", operation_id="convert_miles_to_kilometers")
