@@ -15,10 +15,10 @@ MAX_TUTORIAL_MILES = 100_000
 # --- Request/Response models for clarity ---
 class MilestoKmRequest(BaseModel):
     """Request model for miles to kilometers conversion, with validation.
-    Attributes: ge=0 ensures non-negative input, and description provides API documentation.
+    Attributes: gt=0 rejects zero and negative distances, matching runtime validation.
     """
 
-    miles: float = Field(..., ge=0, description="Distance in miles (>= 0)")
+    miles: float = Field(..., gt=0, description="Distance in miles (> 0)")
 
 
 class MilestoKmResponse(BaseModel):
@@ -33,7 +33,7 @@ class MilestoKmResponse(BaseModel):
 
 def miles_to_kilometers_value(miles: float | None) -> float:
     """
-    Convert miles to kilometers, rejecting negative inputs.
+    Convert miles to kilometers, rejecting zero and negative inputs.
 
     Args:
         miles: Distance in miles.
@@ -42,7 +42,7 @@ def miles_to_kilometers_value(miles: float | None) -> float:
         The distance in kilometers.
 
     Raises:
-        ValueError: If a negative distance is provided.
+        ValidationError: If miles is missing, invalid, or not greater than zero.
     """
     if miles is None:
         raise ValidationError("Miles is required.")
@@ -92,7 +92,7 @@ def miles_to_kilometers(
 TOOL_DEFINITION = [
     {
         "name": "convert_miles_to_kilometers",
-        "description": "Convert miles to kilometers (validates non-negative input)",
+        "description": "Convert miles to kilometers (distance must be greater than zero)",
         "func": miles_to_kilometers_value,
         "tags": {"distance", "conversion"},
     },
