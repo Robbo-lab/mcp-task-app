@@ -7,6 +7,7 @@ import uvicorn
 from fastapi import APIRouter, FastAPI
 from fastmcp import FastMCP
 
+from app.core.settings import settings
 from app.llm.state import queue
 from app.mcp.mcp_prompts.converter_prompts import explain_conversion_prompt
 from app.mcp.mcp_resources.converter_resources import RESOURCE_DEFINITIONS
@@ -97,18 +98,17 @@ app.mount("/mcp", mcp_http_app)
 if __name__ == "__main__":
     import uvicorn
 
-    PORT = 8003
-
     print(
         "Starting the Unit Converter API server (HTTP + MCP tools/resources/prompts)..."
     )
-    print(f"HTTP docs:      http://localhost:{PORT}/docs")
-    print(f"HTTP redoc:     http://localhost:{PORT}/redoc")
-    print(f"MCP endpoint:   http://localhost:{PORT}/mcp (HTTP)")
+    print(f"HTTP docs:      http://{settings.server_host}:{settings.server_port}/docs")
+    print(f"HTTP redoc:     http://{settings.server_host}:{settings.server_port}/redoc")
+    print(f"MCP endpoint:   http://{settings.server_host}:"
+          f"{settings.server_port}/mcp (HTTP)")
 
     uvicorn.run(
         app,
-        host="localhost",
-        port=PORT,
+        host=settings.server_host,
+        port=settings.server_port,
         log_level="trace",  # Uvicorn internal logging
     )

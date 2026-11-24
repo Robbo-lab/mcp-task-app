@@ -6,6 +6,8 @@ from typing import Any
 import httpx
 import pytest
 
+from app.core.settings import settings
+
 collect_ignore = ["test_explain_prompt.py", "test_usage_prompt.py"]
 
 PROTOCOL_VERSION_KEY = "io.modelcontextprotocol/protocolVersion"
@@ -15,7 +17,7 @@ CLIENT_INFO_KEY = "io.modelcontextprotocol/clientInfo"
 
 @pytest.fixture(scope="session")
 def base_url() -> str:
-    return os.getenv("MCP_BASE_URL", "http://localhost:8003").rstrip("/")
+    return settings.mcp_base_url
 
 
 @pytest.fixture(scope="session")
@@ -25,7 +27,7 @@ def mcp_url(base_url: str) -> str:
 
 @pytest.fixture(scope="session")
 def protocol_version() -> str:
-    return os.getenv("MCP_PROTOCOL_VERSION", "2026-07-28")
+    return settings.mcp_protocol_version
 
 
 @pytest.fixture(scope="session")
