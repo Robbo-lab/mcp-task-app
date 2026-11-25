@@ -1,134 +1,94 @@
 from datetime import datetime
 
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 
-from app.data.database_objects import DBTask
 from app.data.pydantic_objects import PLTask
-from app.services.database import DataBaseMethods
+from app.repositories.task_repository import TaskRepository
 
 
 class TaskHandler:
-    """
-    Task Handler class manages the creation, deleting & finding of tasks.
-    This class uses only TaskMethods so creating an instance of this class
-    isn't required.
+    """Handles task operations using a task repository."""
 
-    Args:
-        None
+    def __init__(self, repository: TaskRepository):
+        self.repository = repository
 
-    Returns:
-        None
-    """
-
-    @classmethod
+    @staticmethod
     def create_task(
-        cls, name: str, _type: str, description: str, completed: bool = False
+        name: str,
+        _type: str,
+        description: str,
+        completed: bool = False,
     ) -> PLTask:
         return PLTask(
-            name=name, type=_type, description=description, completed=completed
+            name=name,
+            type=_type,
+            description=description,
+            completed=completed,
         )
 
-    # creates a task with curl content
-    @classmethod
-    def add_task_to_db(cls, db: Session, task: PLTask):
-        """Creates a task and adds it to the misc."""
-        # print(db) # debug print
-        new_task_obj = DBTask(
-            id=task.id or None,
-            name=task.name,
-            type=task.type,
-            description=task.description,
-            completed=task.completed or False,
-            task_started=task.task_started or datetime.now(),
-        )
+    def add_task(self, task: PLTask) -> PLTask:
+        """Create and save a task."""
+        return self.repository.add(task)
 
-        new_task_obj = DataBaseMethods.add_object(db, new_task_obj)
+    def delete_task(self, name_or_id: int | str) -> None:
+        """Delete a task by name or ID."""
+        if not isinstance(name_or_id, (int, str)):
+            raise TypeError("name_or_id must be either a name or an ID")
 
-        if not new_task_obj:
-            raise Exception("No new task obj")
+        self.repository.delete(name_or_id)
 
-        task.id = new_task_obj.id  # ty: ignore
+    def get_task(self, name_or_id: str | int) -> PLTask | None:
+        """Retrieve a task by name or ID."""
+        if isinstance(name_or_id, str):
+            return self.repository.get_by_name(name_or_id)
 
-        return task
-
-    # Deletes a task based on int or str inputted
-    @classmethod
-    def delete_task(cls, db: Session, name_or_id: int | str):
         if isinstance(name_or_id, int):
-            task = DataBaseMethods.get_object_by_id(db, DBTask, name_or_id)
-        elif isinstance(name_or_id, str):
-            task = DataBaseMethods.get_object_by_name(db, DBTask, name_or_id)
-        else:
-            raise TypeError("name_or_id must be either a name or an id")
+            return self.repository.get_by_id(name_or_id)
 
-        if task:
-            DataBaseMethods.delete_object(db, task)
+        raise TypeError("name_or_id must be either a name or an ID")
 
-    # Don't like repetitive nature of this func
-    @classmethod
-    def get_task(cls, db, name: str | int):
-        """
-        This method gets a task by either it's name or id.
+    def list_tasks(
+        self,
+        task_type: str | None = None,
+    ) -> list[PLTask]:
+        """Retrieve tasks, optionally filtered by type."""
+        return self.repository.list(task_type)
 
-        Args:
-            db (Session): Session
-            name (str, int): Name or ID of task
+    def complete_task(self, task: PLTask) -> PLTask:
+        """Mark a task as completed."""
+        if task.id is None:
+            raise HTTPException(
+                status_code=400,
+                detail="task id is required",
+            )
 
-        Returns:
-            task (PLTask): pydantic object of task in this case a PLTask
-        """
-        if type(name) is str:
-            dbtask = DataBaseMethods.get_object_by_name(db, DBTask, name)
-        elif type(name) is int:
-            dbtask = DataBaseMethods.get_object_by_id(db, DBTask, name)
-        else:
-            raise Exception("Name must be int or str")
-
-        if dbtask:
-            # makes sure that the returned task is a pydantic object
-            return cls.__from_db_to_pl(dbtask)
-        return False
-
-    @classmethod
-    def list_tasks(cls, db: Session, _type: str | None = None):
-
-        tasks = DataBaseMethods.query_db(db, DBTask, "type", _type)
-        new_list = []
-
-        for task in tasks:
-            new_list.append(cls.__from_db_to_pl(task))
-
-        return new_list
-
-    @classmethod
-    def complete_task(cls, db: Session, task: PLTask):
         task.completed = True
         task.task_ended = datetime.now()
 
-        if task.id is None:
-            raise HTTPException(status_code=400, detail="task id is required")
-        dbtask = DataBaseMethods.get_object_by_id(db, DBTask, task.id)
+        try:
+            updated_task = self.repository.update(task)
+        except Exception as err:
+            raise HTTPException(
+                status_code=500,
+                detail=str(err),
+            ) from err
 
-        if dbtask:
-            try:
-                dbtask.completed = True  # ty: ignore
-                dbtask.task_ended = task.task_ended  # ty: ignore
+        if updated_task is None:
+            raise HTTPException(
+                status_code=404,
+                detail="Task not found",
+            )
 
-                db.commit()
-                return task
-            except Exception as err:
-                raise HTTPException(status_code=500, detail=str(err)) from err
-        else:
-            raise HTTPException(status_code=404, detail="Task not found")
+        return updated_task
 
-    @classmethod
-    def task_run_duration(cls, task: PLTask):
+    @staticmethod
+    def task_run_duration(task: PLTask) -> float:
+        """Return the duration of a completed task."""
         if task.task_started and task.task_ended:
             time_elapsed = task.task_ended - task.task_started
             return time_elapsed.total_seconds()
-        raise HTTPException(status_code=500, detail="Task hasn't finished running")
 
-    @classmethod
-    def __from_db_to_pl(cls, dbtask: DBTask):
-        return PLTask.model_validate(dbtask)
+        raise HTTPException(
+            status_code=500,
+            detail="Task hasn't finished running",
+        )
