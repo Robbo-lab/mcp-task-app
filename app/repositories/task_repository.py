@@ -28,11 +28,10 @@ class TaskRepository(ABC):
 
     @abstractmethod
     def list(self, task_type: str | None = None) -> list[PLTask]:
-        """Retrieve tasks, optionally filtered by type."""
+        """Get tasks, optionally filtered by type."""
         raise NotImplementedError
 
     @abstractmethod
-    def update(self, task: PLTask) -> PLTask:
+    def update(self, task: PLTask) -> PLTask | None:
         """Update an existing task."""
         raise NotImplementedError
-
