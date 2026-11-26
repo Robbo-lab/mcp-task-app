@@ -1,4 +1,6 @@
 
+"""Handle task operations independently of the storage implementation."""
+
 from datetime import datetime
 
 from fastapi import HTTPException
@@ -8,15 +10,22 @@ from app.repositories.task_repository import TaskRepository
 
 
 class TaskHandler:
-    """Handles task operations using a task repository."""
+    """Handle task operations using an injected repository.
 
-    def __init__(self, repository: TaskRepository) -> None:
-        """Initialise the TaskHandler with a task repository.
+    The handler contains task-related application logic and delegates
+    storage operations to the supplied TaskRepository implementation.
+
+    Attributes:
+        repository: The repository used to access task storage.
+    """
+
+    def __init__(self, repository: TaskRepository):
+        """Initialise the handler with a task repository.
 
         Args:
-            repository: The repository used to access task storage.
+            repository: The repository used for task storage operations.
         """
-        self.repository: TaskRepository = repository
+        self.repository = repository
 
     @staticmethod
     def create_task(
@@ -25,11 +34,11 @@ class TaskHandler:
         description: str,
         completed: bool = False,
     ) -> PLTask:
-        """Create a new task object.
+        """Create a PLTask object without saving it.
 
         Args:
             name: The name of the task.
-            _type: The type or category of the task.
+            _type: The type assigned to the task.
             description: A description of the task.
             completed: Whether the task has been completed.
 
@@ -44,13 +53,13 @@ class TaskHandler:
         )
 
     def add_task(self, task: PLTask) -> PLTask:
-        """Add a task to the repository.
+        """Save a task using the configured repository.
 
         Args:
             task: The task to save.
 
         Returns:
-            The saved task.
+            The saved task, including its generated ID.
         """
         return self.repository.add(task)
 
@@ -58,10 +67,10 @@ class TaskHandler:
         """Delete a task using its name or ID.
 
         Args:
-            name_or_id: The name or ID of the task to delete.
+            name_or_id: The name or integer ID of the task to delete.
 
         Raises:
-            TypeError: If the identifier is not a string or integer.
+            TypeError: If the supplied identifier is not a string or integer.
         """
         if not isinstance(name_or_id, (int, str)):
             raise TypeError("name_or_id must be either a name or an ID")
@@ -72,13 +81,13 @@ class TaskHandler:
         """Retrieve a task using its name or ID.
 
         Args:
-            name_or_id: The name or ID of the task to retrieve.
-
-        Raises:
-            TypeError: If the identifier is not a string or integer.
+            name_or_id: The exact task name or integer database ID.
 
         Returns:
-            The matching task, or None if no task is found.
+            The matching task, or None if it cannot be found.
+
+        Raises:
+            TypeError: If the supplied identifier is not a string or integer.
         """
         if isinstance(name_or_id, str):
             return self.repository.get_by_name(name_or_id)
@@ -92,28 +101,33 @@ class TaskHandler:
         self,
         task_type: str | None = None,
     ) -> list[PLTask]:
-        """Retrieve tasks, optionally filtered by type.
+        """Retrieve tasks, optionally filtering by type.
 
         Args:
-            task_type: The task type used to filter the results.
+            task_type: The task type to filter by. If None, all tasks
+                are returned.
 
         Returns:
-            A list of matching tasks.
+            A list of matching tasks. An empty list is returned when
+            no tasks match the requested filter.
         """
         return self.repository.list(task_type)
 
     def complete_task(self, task: PLTask) -> PLTask:
-        """Mark a task as completed and save the changes.
+        """Mark an existing task as completed.
+
+        Sets the task's completion status and end time, then asks
+        the repository to persist the changes.
 
         Args:
-            task: The task to mark as completed.
-
-        Raises:
-            HTTPException: If the task has no ID, an update fails,
-                or the task cannot be found.
+            task: The task to mark as completed. It must have a database ID.
 
         Returns:
-            The updated completed task.
+            The updated task.
+
+        Raises:
+            HTTPException: If the task has no ID, cannot be found,
+                or an error occurs while updating it.
         """
         if task.id is None:
             raise HTTPException(
@@ -125,7 +139,7 @@ class TaskHandler:
         task.task_ended = datetime.now()
 
         try:
-            updated_task: PLTask | None = self.repository.update(task)
+            updated_task = self.repository.update(task)
         except Exception as err:
             raise HTTPException(
                 status_code=500,
@@ -142,16 +156,17 @@ class TaskHandler:
 
     @staticmethod
     def task_run_duration(task: PLTask) -> float:
-        """Calculate the duration of a completed task.
+        """Calculate the elapsed time for a completed task.
 
         Args:
             task: The task containing its start and end timestamps.
 
-        Raises:
-            HTTPException: If the task has not finished running.
-
         Returns:
-            The elapsed task duration in seconds.
+            The elapsed time in seconds.
+
+        Raises:
+            HTTPException: If the task has not finished or is missing
+                either timestamp.
         """
         if task.task_started and task.task_ended:
             time_elapsed = task.task_ended - task.task_started

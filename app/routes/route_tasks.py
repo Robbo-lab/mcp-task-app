@@ -1,4 +1,6 @@
 
+"""Define API routes for task management."""
+
 from typing import Annotated
 
 from fastapi import Depends, HTTPException
@@ -10,19 +12,20 @@ from app.repositories.database_task_repository import DatabaseTaskRepository
 from app.routes.router_handler import Router
 from app.services.database import get_session_api
 
+
 task_router = Router.task_router
 
 
 def get_task_handler(session: Session) -> TaskHandler:
-    """Create a TaskHandler with a database repository.
+    """Create a task handler using the supplied database session.
 
     Args:
-        session: The SQLAlchemy database session.
+        session: The database session provided by the API dependency.
 
     Returns:
-        A TaskHandler instance using the database repository.
+        A TaskHandler configured with a DatabaseTaskRepository.
     """
-    repository: DatabaseTaskRepository = DatabaseTaskRepository(session)
+    repository = DatabaseTaskRepository(session)
     return TaskHandler(repository)
 
 
@@ -34,19 +37,19 @@ def get_task_by_name(
     """Retrieve a task using its name.
 
     Args:
-        session: The SQLAlchemy database session.
-        name: The name of the task to retrieve.
-
-    Raises:
-        HTTPException: If the name is missing or the task is not found.
+        session: The database session for the current request.
+        name: The exact name of the task to retrieve.
 
     Returns:
-        The requested task.
+        The matching task.
+
+    Raises:
+        HTTPException: If the name is missing or the task cannot be found.
     """
     if name is None:
         raise HTTPException(status_code=400, detail="name is required")
 
-    task: PLTask | None = get_task_handler(session).get_task(name)
+    task = get_task_handler(session).get_task(name)
 
     if task is None:
         raise HTTPException(
@@ -62,22 +65,22 @@ def get_task_by_id(
     session: Annotated[Session, Depends(get_session_api)],
     task_id: int | None = None,
 ) -> PLTask:
-    """Retrieve a task using its ID.
+    """Retrieve a task using its database ID.
 
     Args:
-        session: The SQLAlchemy database session.
-        task_id: The ID of the task to retrieve.
-
-    Raises:
-        HTTPException: If the task ID is missing or the task is not found.
+        session: The database session for the current request.
+        task_id: The integer ID of the task to retrieve.
 
     Returns:
-        The requested task.
+        The matching task.
+
+    Raises:
+        HTTPException: If the ID is missing or the task cannot be found.
     """
     if task_id is None:
         raise HTTPException(status_code=400, detail="task_id is required")
 
-    task: PLTask | None = get_task_handler(session).get_task(task_id)
+    task = get_task_handler(session).get_task(task_id)
 
     if task is None:
         raise HTTPException(
@@ -92,12 +95,12 @@ def get_task_by_id(
 def delete_task_by_name(
     session: Annotated[Session, Depends(get_session_api)],
     name: str | None = None,
-) -> None:
+):
     """Delete a task using its name.
 
     Args:
-        session: The SQLAlchemy database session.
-        name: The name of the task to delete.
+        session: The database session for the current request.
+        name: The exact name of the task to delete.
 
     Raises:
         HTTPException: If the task name is missing.
@@ -108,22 +111,22 @@ def delete_task_by_name(
     get_task_handler(session).delete_task(name)
 
 
-@task_router.post("/add", response_model=PLTask)
+@task_router.post("/add")
 def create_task(
     session: Annotated[Session, Depends(get_session_api)],
     task: PLTask | None = None,
 ) -> PLTask:
-    """Create a new task.
+    """Create and save a new task.
 
     Args:
-        session: The SQLAlchemy database session.
-        task: The task details to add.
-
-    Raises:
-        HTTPException: If the task details are missing.
+        session: The database session for the current request.
+        task: The task details to save.
 
     Returns:
-        The newly created task.
+        The saved task, including its database ID.
+
+    Raises:
+        HTTPException: If the task is not supplied.
     """
     if task is None:
         raise HTTPException(status_code=400, detail="task is required")
@@ -131,45 +134,46 @@ def create_task(
     return get_task_handler(session).add_task(task)
 
 
-@task_router.get("/task-list", response_model=list[PLTask])
+@task_router.get("/task-list")
 def filter_task_by_type(
     session: Annotated[Session, Depends(get_session_api)],
     task_type: str | None = None,
 ) -> list[PLTask]:
-    """Retrieve tasks, optionally filtered by type.
+    """Retrieve tasks, optionally filtering by task type.
 
     Args:
-        session: The SQLAlchemy database session.
-        task_type: The task type used to filter the results.
+        session: The database session for the current request.
+        task_type: Optional task type used to filter the results.
 
     Returns:
-        A list of tasks matching the specified type.
+        A list of matching tasks. An empty list is returned if there
+        are no matching tasks.
     """
     return get_task_handler(session).list_tasks(task_type)
 
 
-@task_router.post("/complete", response_model=PLTask)
+@task_router.post("/complete")
 def complete_task(
     session: Annotated[Session, Depends(get_session_api)],
     name: str | None = None,
 ) -> PLTask:
-    """Mark a task as complete using its name.
+    """Mark a task as completed using its name.
 
     Args:
-        session: The SQLAlchemy database session.
-        name: The name of the task to complete.
-
-    Raises:
-        HTTPException: If the task name is missing or the task is not found.
+        session: The database session for the current request.
+        name: The exact name of the task to complete.
 
     Returns:
-        The completed task.
+        The updated task.
+
+    Raises:
+        HTTPException: If the name is missing or the task cannot be found.
     """
     if name is None:
         raise HTTPException(status_code=400, detail="name is required")
 
-    handler: TaskHandler = get_task_handler(session)
-    task: PLTask | None = handler.get_task(name)
+    handler = get_task_handler(session)
+    task = handler.get_task(name)
 
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")

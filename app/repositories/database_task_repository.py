@@ -1,4 +1,6 @@
 
+"""Provide SQLAlchemy-based storage operations for tasks."""
+
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -10,29 +12,39 @@ from app.services.database import DataBaseMethods
 
 
 class DatabaseTaskRepository(TaskRepository):
-    """Implement task storage operations using the database."""
+    """Implement task storage operations using SQLAlchemy.
 
-    def __init__(self, db: Session) -> None:
-        """Initialise the repository with a database session.
+    This repository converts between the application's PLTask model
+    and the database DBTask model.
+
+    Attributes:
+        db: The SQLAlchemy session used for database operations.
+    """
+
+    def __init__(self, db: Session):
+        """Initialise the repository with an existing database session.
 
         Args:
-            db: The SQLAlchemy database session.
+            db: The SQLAlchemy session supplied by the application.
         """
-        self.db: Session = db
+        self.db = db
 
     def add(self, task: PLTask) -> PLTask:
-        """Add a task to the database.
+        """Save a task to the database.
+
+        Converts the supplied PLTask into a DBTask, persists it,
+        and copies the generated database ID back to the original task.
 
         Args:
-            task: The task to add to the database.
-
-        Raises:
-            Exception: If the task could not be created.
+            task: The task to save.
 
         Returns:
-            The saved task with its database ID.
+            The task with its database-generated ID.
+
+        Raises:
+            HTTPException: If the database operation fails.
         """
-        new_task: DBTask = DBTask(
+        new_task = DBTask(
             id=task.id or None,
             name=task.name,
             type=task.type,
@@ -44,22 +56,24 @@ class DatabaseTaskRepository(TaskRepository):
         new_task = DataBaseMethods.add_object(self.db, new_task)
 
         if new_task is None:
-            raise Exception("No new task object was created")
+            raise RuntimeError("No new task object was created")
 
         task.id = new_task.id
         return task
 
     def get_by_id(self, task_id: int) -> PLTask | None:
-        """Retrieve a task from the database using its ID.
+        """Retrieve a task from the database by its ID.
 
         Args:
-            task_id: The ID of the task to retrieve.
+            task_id: The database ID of the task.
 
         Returns:
-            The matching task, or None if not found.
+            The matching task as a PLTask, or None if it does not exist.
         """
-        db_task: DBTask | None = DataBaseMethods.get_object_by_id(
-            self.db, DBTask, task_id
+        db_task = DataBaseMethods.get_object_by_id(
+            self.db,
+            DBTask,
+            task_id,
         )
 
         if db_task is None:
@@ -68,16 +82,18 @@ class DatabaseTaskRepository(TaskRepository):
         return PLTask.model_validate(db_task)
 
     def get_by_name(self, name: str) -> PLTask | None:
-        """Retrieve a task from the database using its name.
+        """Retrieve a task from the database by its name.
 
         Args:
-            name: The name of the task to retrieve.
+            name: The exact name of the task.
 
         Returns:
-            The matching task, or None if not found.
+            The matching task as a PLTask, or None if it does not exist.
         """
-        db_task: DBTask | None = DataBaseMethods.get_object_by_name(
-            self.db, DBTask, name
+        db_task = DataBaseMethods.get_object_by_name(
+            self.db,
+            DBTask,
+            name,
         )
 
         if db_task is None:
@@ -86,21 +102,22 @@ class DatabaseTaskRepository(TaskRepository):
         return PLTask.model_validate(db_task)
 
     def list(self, task_type: str | None = None) -> list[PLTask]:
-        """Retrieve tasks from the database, optionally filtered by type.
+        """Retrieve tasks from the database.
 
         Args:
-            task_type: The task type used to filter the results.
+            task_type: Optional task type used to filter the results.
                 If None, all tasks are returned.
 
         Returns:
-            A list of matching tasks.
+            A list of matching tasks. Returns an empty list if no
+            tasks match the requested filter.
         """
         query = self.db.query(DBTask)
 
         if task_type is not None:
             query = query.filter(DBTask.type == task_type)
 
-        db_tasks: list[DBTask] = query.all()
+        db_tasks = query.all()
 
         return [
             PLTask.model_validate(db_task)
@@ -108,21 +125,25 @@ class DatabaseTaskRepository(TaskRepository):
         ]
 
     def delete(self, name_or_id: str | int) -> None:
-        """Delete a task using its name or ID.
+        """Delete a task from the database by name or ID.
 
         Args:
-            name_or_id: The name or ID of the task to delete.
+            name_or_id: The exact task name or integer database ID.
 
         Raises:
-            TypeError: If the identifier is not a string or integer.
+            TypeError: If the supplied identifier is not a string or integer.
         """
         if isinstance(name_or_id, int):
-            db_task: DBTask | None = DataBaseMethods.get_object_by_id(
-                self.db, DBTask, name_or_id
+            db_task = DataBaseMethods.get_object_by_id(
+                self.db,
+                DBTask,
+                name_or_id,
             )
         elif isinstance(name_or_id, str):
             db_task = DataBaseMethods.get_object_by_name(
-                self.db, DBTask, name_or_id
+                self.db,
+                DBTask,
+                name_or_id,
             )
         else:
             raise TypeError("name_or_id must be either a name or an ID")
@@ -133,17 +154,23 @@ class DatabaseTaskRepository(TaskRepository):
     def update(self, task: PLTask) -> PLTask | None:
         """Update an existing task in the database.
 
+        The task ID is used to locate the database record. All task
+        fields managed by this repository are then updated.
+
         Args:
-            task: The task containing the updated information.
+            task: The task containing the updated values.
 
         Returns:
-            The updated task, or None if the task ID is missing
-            or the task cannot be found.
+            The updated task, or None if it has no ID or cannot be found.
+
+        Raises:
+            Exception: Re-raises database errors after rolling back
+                the current transaction.
         """
         if task.id is None:
             return None
 
-        db_task: DBTask | None = (
+        db_task = (
             self.db.query(DBTask)
             .filter(DBTask.id == task.id)
             .first()
