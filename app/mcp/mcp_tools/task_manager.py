@@ -1,3 +1,9 @@
+"""Define MCP tools for creating, retrieving, updating and deleting tasks.
+
+The tools use TaskHandler for task operations and
+DatabaseTaskRepository for database persistence.
+"""
+
 from datetime import datetime
 from typing import Annotated
 
@@ -7,12 +13,26 @@ from sqlalchemy.orm import Session
 
 from app.api.task_handler import TaskHandler
 from app.data.pydantic_objects import PLTask
+from app.repositories.database_task_repository import DatabaseTaskRepository
 from app.services.database import get_session_api
 from app.utils.get_principal import Principal
 from app.utils.permissions import (
     enforce_task_read_permissions,
     enforce_task_write_permissions,
 )
+
+
+def get_task_handler(session: Session) -> TaskHandler:
+    """Create a task handler using the supplied database session.
+
+    Args:
+        session: The database session provided to the MCP tool.
+
+    Returns:
+        A TaskHandler configured with a DatabaseTaskRepository.
+    """
+    repository = DatabaseTaskRepository(session)
+    return TaskHandler(repository)
 
 
 class TaskInput(BaseModel):
@@ -53,9 +73,9 @@ class GetTaskByNameInput(BaseModel):
 
 
 class GetTaskByIdInput(BaseModel):
-    """Input schema for retrieving a task by its name."""
+    """Input schema for retrieving a task by its ID."""
 
-    id: str = Field(description="Exact id of the task to search for.")
+    id: int = Field(description="Exact ID of the task to search for.")
 
 
 class DeleteTaskByNameInput(BaseModel):
@@ -72,15 +92,8 @@ class ListTasksInput(BaseModel):
     )
 
 
-# GetOutput
 class GetTaskOutput(BaseModel):
-    """Response model returned by task manager tools.
-
-    Attributes:
-        success: Indicates whether the operation completed successfully.
-        message: Human-readable message describing the result.
-        task: The retrieved task, or None if no task was found.
-    """
+    """Response model returned by task manager tools."""
 
     success: bool = Field(
         description="Indicates whether the operation completed successfully."
@@ -94,11 +107,7 @@ class GetTaskOutput(BaseModel):
 
 
 class DeleteTaskByNameOutput(BaseModel):
-    """Response model for deleting a task.
-
-    Attributes:
-        message: Human-readable message describing the result.
-    """
+    """Response model for deleting a task."""
 
     message: str = Field(
         description="Message describing the result of the delete operation."
@@ -106,13 +115,7 @@ class DeleteTaskByNameOutput(BaseModel):
 
 
 class CreateTaskOutput(BaseModel):
-    """Response model for creating a task.
-
-    Attributes:
-        success: Indicates whether the task was created successfully.
-        message: Human-readable message describing the result.
-        task: The created task, or None if creation failed.
-    """
+    """Response model for creating a task."""
 
     success: bool = Field(
         description="Indicates whether the task was created successfully."
@@ -126,19 +129,13 @@ class CreateTaskOutput(BaseModel):
 
 
 class ListTasksOutput(BaseModel):
-    """Response model for listing tasks.
-
-    Attributes:
-        success: Indicates whether the tasks were retrieved successfully.
-        message: Human-readable message describing the result.
-        tasks: List of tasks matching the requested criteria, or None if no tasks were found.
-    """
+    """Response model for listing tasks."""
 
     success: bool = Field(
         description="Indicates whether the tasks were retrieved successfully."
     )
     message: str = Field(
-        description="Human-readable message describing the result of the operation."
+        description="Human-readable message describing the result."
     )
     tasks: list[PLTask] | None = Field(
         description="List of tasks returned by the operation, or None if no tasks were found."
@@ -153,31 +150,27 @@ def create_task_tool(
     """Create a new task in the task manager.
 
     Use this tool when the user wants to create or add a new task.
-    Do not use this tool to update, complete, retrieve, or delete tasks.
+    Do not use it to update, complete, retrieve or delete tasks.
 
     Args:
-        session: Database session used to access task data.
-        body: Request containing the task to create.
+        session: Database session used to access task storage.
         principal: Authenticated principal used for permission checks.
+        body: Input containing the task details to save.
 
     Returns:
-        CreateTaskOutput containing:
-        - success: Whether the task was created successfully.
-        - message: Description of the operation result.
-        - task: The created task, if successful.
+        CreateTaskOutput indicating whether the task was created
+        and containing the created task when successful.
     """
     enforce_task_write_permissions(principal)
 
-    try:
-        task = TaskHandler.add_task_to_db(session, body.task)
-    except Exception as e:
-        raise e
+    handler = get_task_handler(session)
+    task = handler.add_task(body.task)
 
     if task is None:
         return CreateTaskOutput(
             success=False,
             message=f"Task '{body.task.name}' was not created",
-            task=task,
+            task=None,
         )
 
     return CreateTaskOutput(
@@ -192,22 +185,24 @@ def delete_task_tool(
     principal: Principal,
     body: DeleteTaskByNameInput,
 ) -> DeleteTaskByNameOutput:
-    """Delete an existing task by its name.
+    """Delete an existing task using its name.
 
-    Use this tool only when the user explicitly requests to delete or remove a task.
+    Use this tool only when the user explicitly requests that a task
+    be deleted or removed.
 
     Args:
-        session: Database session used to access task data.
-        body: Request containing the exact name of the task to delete.
+        session: Database session used to access task storage.
         principal: Authenticated principal used for permission checks.
+        body: Input containing the exact name of the task to delete.
 
     Returns:
-        DeleteTaskByNameOutput containing:
-        - message: Description of the operation result.
+        DeleteTaskByNameOutput containing the operation result message.
     """
     enforce_task_write_permissions(principal)
 
-    TaskHandler.delete_task(session, body.name)
+    handler = get_task_handler(session)
+    handler.delete_task(body.name)
+
     return DeleteTaskByNameOutput(
         message=f"Task '{body.name}' was deleted",
     )
@@ -218,39 +213,34 @@ def get_task_by_name_tool(
     principal: Principal,
     body: GetTaskByNameInput,
 ) -> GetTaskOutput:
-    """Retrieve a task by its name.
+    """Retrieve a task using its exact name.
 
-    Use this tool when the user wants to view, find, or get information
-    about a specific task.
+    Use this tool when the user wants to view or find a specific task.
 
     Args:
-        session: Database session used to access task data.
+        session: Database session used to access task storage.
         principal: Authenticated principal used for permission checks.
-        body: Request containing the exact name of the task to retrieve.
+        body: Input containing the exact task name.
 
     Returns:
-        GetTaskOutput containing:
-        - success: Whether the task was found.
-        - message: Description of the operation result.
-        - task: The retrieved task, if found.
+        GetTaskOutput indicating whether the task was found and
+        containing the retrieved task when successful.
     """
     enforce_task_read_permissions(principal)
 
-    try:
-        task = TaskHandler.get_task(session, body.name)
-    except Exception as e:
-        raise e
+    handler = get_task_handler(session)
+    task = handler.get_task(body.name)
 
     if task is None:
         return GetTaskOutput(
             success=False,
             message=f"Task '{body.name}' was not found",
-            task=task,
+            task=None,
         )
 
     return GetTaskOutput(
         success=True,
-        message=f"Task '{body.name}' was completed",
+        message=f"Task '{body.name}' was retrieved successfully",
         task=task,
     )
 
@@ -260,39 +250,34 @@ def get_task_by_id_tool(
     principal: Principal,
     body: GetTaskByIdInput,
 ) -> GetTaskOutput:
-    """Retrieve a task by its ID.
+    """Retrieve a task using its unique database ID.
 
-    Use this tool when the user wants to view, find, or get information
-    about a specific task and provides the task ID.
+    Use this tool when the user provides the ID of a specific task.
 
     Args:
-        session: Database session used to access task data.
-        body: Request containing the unique ID of the task to retrieve.
+        session: Database session used to access task storage.
         principal: Authenticated principal used for permission checks.
+        body: Input containing the integer task ID.
 
     Returns:
-        GetTaskOutput containing:
-        - success: Whether the task was found.
-        - message: Description of the operation result.
-        - task: The retrieved task, if found.
+        GetTaskOutput indicating whether the task was found and
+        containing the retrieved task when successful.
     """
     enforce_task_read_permissions(principal)
 
-    try:
-        task = TaskHandler.get_task(session, body.id)
-    except Exception as e:
-        raise e
+    handler = get_task_handler(session)
+    task = handler.get_task(body.id)
 
     if task is None:
         return GetTaskOutput(
             success=False,
             message=f"Task '{body.id}' was not found",
-            task=task,
+            task=None,
         )
 
     return GetTaskOutput(
         success=True,
-        message=f"Task '{body.id}' was completed",
+        message=f"Task '{body.id}' was retrieved successfully",
         task=task,
     )
 
@@ -302,30 +287,30 @@ def list_tasks_tool(
     principal: Principal,
     body: ListTasksInput,
 ) -> ListTasksOutput:
-    """Retrieve a list of tasks filtered by status.
+    """Retrieve tasks filtered by task type.
 
     Use this tool when the user wants to view multiple tasks,
-    such as all pending or all completed tasks.
+    such as tasks belonging to a particular type.
 
     Args:
-        session: Database session used to access task data.
-        body: Request containing the task status filter.
+        session: Database session used to access task storage.
         principal: Authenticated principal used for permission checks.
+        body: Input containing the task type filter.
 
     Returns:
-            ListTasksOutput containing:
-        - success: Whether matching tasks were found.
-        - message: Description of the operation result.
-        - tasks: List of tasks matching the requested status.
+        ListTasksOutput containing the matching tasks and the
+        result of the retrieval operation.
     """
     enforce_task_read_permissions(principal)
 
-    filtered_tasks = TaskHandler.list_tasks(session, body.task_type)
-    if filtered_tasks is None:
+    handler = get_task_handler(session)
+    filtered_tasks = handler.list_tasks(body.task_type)
+
+    if not filtered_tasks:
         return ListTasksOutput(
             success=False,
             message="No matching tasks were found",
-            tasks=filtered_tasks,
+            tasks=[],
         )
 
     return ListTasksOutput(
@@ -342,31 +327,30 @@ def complete_task_tool(
 ) -> GetTaskOutput:
     """Mark an existing task as completed.
 
-    Use this tool when the user wants to complete, finish,
-    or mark a task as done.
+    Use this tool when the user wants to finish or mark a task as done.
 
     Args:
-        session: Database session used to access task data.
-        body: Request containing the name of the task to complete.
+        session: Database session used to access task storage.
         principal: Authenticated principal used for permission checks.
+        body: Input containing the name of the task to complete.
 
     Returns:
-        GetTaskOutput containing:
-        - success: Whether the task was found and completed.
-        - message: Description of the operation result.
-        - task: The updated task with completed status set to True.
+        GetTaskOutput indicating whether the task was completed and
+        containing the updated task when successful.
     """
     enforce_task_write_permissions(principal)
 
-    task = TaskHandler.get_task(session, body.name)
+    handler = get_task_handler(session)
+    task = handler.get_task(body.name)
 
     if task is None:
         return GetTaskOutput(
             success=False,
             message=f"Task '{body.name}' was not found",
-            task=task,
+            task=None,
         )
-    completed_task = TaskHandler.complete_task(session, task)
+
+    completed_task = handler.complete_task(task)
 
     return GetTaskOutput(
         success=True,
